@@ -12,7 +12,7 @@ class AnimalTest extends TestCase
 
     public function test_la_base_de_datos_esta_accesible(): void
     {
-        $this->assertTrue(true); // Confirma que las migraciones corrieron
+        $this->assertTrue(false); // Confirma que las migraciones corrieron
     }
 
     public function test_endpoint_raiz_responde(): void
