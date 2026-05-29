@@ -1,0 +1,60 @@
+name: CI - Laravel API
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: bovweight_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Configurar PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, pdo, pdo_mysql, xml, bcmath
+          coverage: none
+
+      - name: Copiar archivo .env de pruebas
+        run: cp .env.example .env.testing
+
+      - name: Configurar variables de entorno de prueba
+        run: |
+          echo "DB_CONNECTION=mysql" >> .env.testing
+          echo "DB_HOST=127.0.0.1" >> .env.testing
+          echo "DB_PORT=3306" >> .env.testing
+          echo "DB_DATABASE=bovweight_test" >> .env.testing
+          echo "DB_USERNAME=root" >> .env.testing
+          echo "DB_PASSWORD=root" >> .env.testing
+
+      - name: Instalar dependencias con Composer
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Generar clave de aplicación
+        run: php artisan key:generate --env=testing
+
+      - name: Ejecutar migraciones
+        run: php artisan migrate --env=testing --force
+
+      - name: Ejecutar pruebas PHPUnit
+        run: php artisan test --env=testing
